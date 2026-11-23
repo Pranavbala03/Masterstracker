@@ -85,6 +85,7 @@
   .scroll { overflow-x: auto; }
   .bar { height: 6px; background: var(--soft); margin: 6px 0 20px; }
   .bar i { display: block; height: 100%; background: var(--accent); }
+  .docrow.done b { text-decoration: line-through; color: var(--mute); }
   .docrow { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr) 140px minmax(0, 2fr); gap: 14px; align-items: center; border-top: 1px solid var(--soft); padding: 10px 0; }
   @media (max-width: 800px) { .docrow { grid-template-columns: 1fr 140px; } .docrow .hide-s { display: none; } }
 
@@ -205,7 +206,7 @@ async function load() {
 
 function toast(msg, err) {
   const t = $('#toast'); t.textContent = msg; t.className = 'toast on' + (err ? ' err' : '');
-  clearTimeout(toast.t); toast.t = setTimeout(() => t.className = 'toast', err ? 3500 : 1100);
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.className = 'toast', err ? 4000 : 2200);
 }
 
 async function post(body) {
@@ -364,10 +365,17 @@ function vPlan() {
     + '<p class="muted" style="margin-top:20px">Dates marked as last cycle are 2026-27 dates. Confirm each when the 2027-28 round opens.</p>';
 }
 
+const isDone = d => /^(Have|Done)/.test(d.Status || '');
+function updateDocs() {
+  const D = data.Documents.rows, done = D.filter(isDone).length;
+  const p = $('#docp'); if (!p) return;
+  p.textContent = done + ' of ' + D.length + ' ready'; $('#docbar').style.width = (D.length ? done / D.length * 100 : 0) + '%';
+  D.forEach(d => { const r = document.querySelector('[data-docrow="' + d._row + '"]'); if (r) r.classList.toggle('done', isDone(d)); });
+}
 function vDocs() {
   const D = data.Documents.rows, done = D.filter(d => /^(Have|Done)/.test(d.Status || '')).length;
-  return `<div class="label">${done} of ${D.length} ready</div><div class="bar"><i style="width:${D.length ? done / D.length * 100 : 0}%"></i></div>
-  ${D.map(d => `<div class="docrow"><b>${esc(d.Document)}</b><span class="muted hide-s">${esc(d['Needed for'])}</span>
+  return `<div class="label" id="docp">${done} of ${D.length} ready</div><div class="bar"><i id="docbar" style="width:${D.length ? done / D.length * 100 : 0}%"></i></div>
+  ${D.map(d => `<div class="docrow ${isDone(d) ? 'done' : ''}" data-docrow="${d._row}"><b>${esc(d.Document)}</b><span class="muted hide-s">${esc(d['Needed for'])}</span>
     ${sel(STATUS.Documents, d.Status, `data-table="Documents" data-row="${d._row}" data-h="Status"`)}
     <input type="text" class="hide-s" value="${esc(d.Notes)}" data-table="Documents" data-row="${d._row}" data-h="Notes"></div>`).join('')}`;
 }
@@ -420,6 +428,7 @@ document.addEventListener('change', e => {
   const el = e.target; if (el.id === 'hd') { filt.hideDropped = el.checked; render(); return; }
   if (!el.dataset.table || el.dataset.num !== undefined) return;
   save(el.dataset.table, rowOf(el), { [el.dataset.h]: el.value });
+  if (el.dataset.table === 'Documents') updateDocs();
 });
 document.addEventListener('input', e => {
   const el = e.target;

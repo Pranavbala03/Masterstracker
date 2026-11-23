@@ -63,6 +63,8 @@ function seed_(body) {
     const cfg = CONFIG[name]; if (!cfg) return;
     const t = body.data[name];
     const s = ss.getSheetByName(cfg.sheet) || ss.insertSheet(cfg.sheet);
+    // Keep text like "Sep 2028" as text: Sheets would otherwise turn it into a date.
+    t.headers.forEach(function (h, j) { if (h === 'Target intake' || h === 'When') s.getRange(1, j + 1, s.getMaxRows(), 1).setNumberFormat('@'); });
     s.getRange(cfg.headerRow, 1, 1, t.headers.length).setValues([t.headers]).setFontWeight('bold');
     t.rows.forEach(function (r) {
       s.getRange(r._row, 1, 1, t.headers.length).setValues([t.headers.map(function (h) { const v = r[h]; return v === null || v === undefined ? '' : v; })]);

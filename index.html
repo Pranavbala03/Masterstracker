@@ -173,7 +173,7 @@ const STATUS = {
 const VIEWS = ['Overview', 'Programmes', 'Funding', 'Plan', 'Docs', 'Cost'];
 let data = null, mode = 'demo', view = 'Overview';
 const open = new Set();
-const filt = { country: 'All', tier: 'All', q: '', hideDropped: true };
+const filt = { country: 'All', tier: 'All', q: '', hideDropped: true, research: '' };
 
 /* ---------- data layer ---------- */
 const base = () => localStorage.getItem(LS.url) || '';
@@ -292,12 +292,14 @@ function vProgrammes() {
   const countries = ['All', ...new Set(P.map(p => p.Country))], tiers = ['All', 'Reach', 'Match', 'Safe', 'Backup'];
   const q = filt.q.toLowerCase();
   const list = P.filter(p => (filt.country === 'All' || p.Country === filt.country) && (filt.tier === 'All' || p.Tier === filt.tier)
-    && !(filt.hideDropped && p.Status === 'Dropped') && (!q || JSON.stringify(p).toLowerCase().includes(q)));
+    && (!filt.research || /research/i.test(p.Fit || '')) && !(filt.hideDropped && p.Status === 'Dropped') && (!q || JSON.stringify(p).toLowerCase().includes(q)));
   return `
   <div class="filters">
     ${countries.map(c => `<button class="chip ${filt.country === c ? 'on' : ''}" data-f="country" data-v="${esc(c)}">${esc(c)}</button>`).join('')}
     <span class="muted">|</span>
     ${tiers.map(c => `<button class="chip ${filt.tier === c ? 'on' : ''}" data-f="tier" data-v="${c}">${c}</button>`).join('')}
+    <span class="muted">|</span>
+    <button class="chip ${filt.research ? 'on' : ''}" data-f="research" data-v="${filt.research ? '' : '1'}">Research-led</button>
     <input type="search" id="q" placeholder="Search" value="${esc(filt.q)}">
     <label class="label"><input type="checkbox" id="hd" ${filt.hideDropped ? 'checked' : ''}> hide dropped</label>
     <button class="pill" id="add" style="margin-left:auto">+ Add programme</button>

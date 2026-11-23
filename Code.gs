@@ -5,6 +5,9 @@
  * Copy the web app URL into the tracker's Settings together with the same token.
  */
 const TOKEN = 'CHANGE-ME-to-a-long-random-string';
+// If this script is standalone (not opened from the sheet), paste the sheet's ID here (the long part of its URL). Leave empty when bound to the sheet.
+const SHEET_ID = '';
+function ss_() { return SHEET_ID ? SpreadsheetApp.openById(SHEET_ID) : SpreadsheetApp.getActive(); }
 
 // Each "table" is a header row plus the rows below it, read until column A is empty.
 const CONFIG = {
@@ -32,7 +35,7 @@ function out_(obj) {
 
 function readTable_(name) {
   const c = CONFIG[name];
-  const sh = SpreadsheetApp.getActive().getSheetByName(c.sheet);
+  const sh = ss_().getSheetByName(c.sheet);
   if (!sh) throw new Error('Missing sheet: ' + c.sheet);
   const lastCol = sh.getLastColumn();
   const headers = sh.getRange(c.headerRow, 1, 1, lastCol).getValues()[0];
@@ -53,7 +56,7 @@ function readTable_(name) {
 // One-off: fill an empty spreadsheet with the starting data (sent from the tracker's Settings > Push starting data).
 // Refuses to run if Programmes already has rows, unless body.force is true.
 function seed_(body) {
-  const ss = SpreadsheetApp.getActive();
+  const ss = ss_();
   const existing = ss.getSheetByName('Programmes');
   if (existing && existing.getLastRow() > 1 && !body.force) return out_({ ok: false, error: 'Programmes already has data' });
   Object.keys(body.data).forEach(function (name) {
@@ -92,7 +95,7 @@ function doPost(e) {
     if (body.action === 'seed') return seed_(body);
     const c = CONFIG[body.table];
     if (!c) return out_({ ok: false, error: 'unknown table' });
-    const sh = SpreadsheetApp.getActive().getSheetByName(c.sheet);
+    const sh = ss_().getSheetByName(c.sheet);
     const lastCol = sh.getLastColumn();
     const headers = sh.getRange(c.headerRow, 1, 1, lastCol).getValues()[0];
 

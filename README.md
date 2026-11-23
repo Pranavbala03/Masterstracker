@@ -13,7 +13,7 @@ Without a sheet it runs on demo data saved in your browser, so you can try it fi
 ## Connect it to Google Sheets (about 5 minutes)
 
 1. Go to drive.google.com, upload `Masters-Planning-Tracker.xlsx`, open it, and choose File > Save as Google Sheets.
-2. In that Google Sheet: Extensions > Apps Script. Delete the starter code and paste in `Code.gs`.
+2. In that Google Sheet: Extensions > Apps Script (or create a standalone project and set `SHEET_ID` at the top of `Code.gs` to the sheet's ID). Delete the starter code and paste in `Code.gs`.
 3. Change `TOKEN` at the top to a long random string of your own. Save.
 4. Deploy > New deployment > type: Web app. Execute as: Me. Who has access: Anyone. Deploy and approve the permissions.
 5. Copy the Web app URL (ends in `/exec`).

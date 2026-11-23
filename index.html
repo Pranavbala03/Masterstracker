@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Masters 2028 tracker</title>
+<style>
+  :root {
+    --bg: #f3f0e8; --ink: #111; --mute: #6b675e; --rule: #111; --soft: #d9d4c6; --accent: #ff4d14;
+    --ok: #1f7a3d; --warn: #b7791f; --bad: #b3261e;
+    --sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.45; }
+  body { margin: 0; padding: 28px clamp(16px, 4vw, 56px) 80px; max-width: 1280px; margin-inline: auto; }
+  .mono, .label { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+  .label { color: var(--mute); }
+  a { color: inherit; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+  button, select, input, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+
+  header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  h1 { font-size: clamp(44px, 9vw, 112px); line-height: .92; letter-spacing: -.045em; margin: 10px 0 0; font-weight: 700; }
+  h1 span { color: var(--accent); }
+  .tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+  .pill { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; border: 1px solid var(--ink); background: transparent; padding: 7px 11px; border-radius: 999px; }
+  .pill:hover { background: var(--ink); color: var(--bg); }
+  .mode { border-color: var(--soft); color: var(--mute); }
+  .mode.live { border-color: var(--ok); color: var(--ok); }
+
+  nav { display: flex; gap: 4px; margin: 34px 0 0; border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
+  nav button { background: none; border: 0; padding: 10px 14px 12px; font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); border-bottom: 3px solid transparent; margin-bottom: -1px; }
+  nav button.on { color: var(--ink); border-bottom-color: var(--accent); }
+
+  main { padding-top: 30px; }
+  h2 { font-size: 13px; font-family: var(--mono); letter-spacing: .08em; text-transform: uppercase; font-weight: 500; margin: 0 0 14px; }
+  .grid { display: grid; gap: 32px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); border-top: 1px solid var(--rule); }
+  .stat { padding: 16px 16px 20px 0; border-bottom: 1px solid var(--rule); }
+  .stat b { display: block; font-size: clamp(40px, 6vw, 72px); letter-spacing: -.04em; line-height: 1; font-weight: 700; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  @media (max-width: 800px) { .two { grid-template-columns: 1fr; } }
+  .flag { border-top: 1px solid var(--rule); padding: 12px 0; display: grid; grid-template-columns: 22px 1fr; gap: 6px; }
+  .flag i { width: 10px; height: 10px; background: var(--accent); margin-top: 6px; display: block; }
+  .flag.ok i { background: var(--ok); }
+  .step { border-top: 1px solid var(--rule); padding: 12px 0; display: grid; grid-template-columns: 150px 1fr; gap: 12px; }
+  @media (max-width: 600px) { .step { grid-template-columns: 1fr; } }
+
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+  .chip { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--soft); background: transparent; padding: 6px 10px; border-radius: 999px; }
+  .chip.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  input[type=search], input[type=text], select, textarea { background: transparent; border: 1px solid var(--soft); border-radius: 6px; padding: 7px 9px; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  textarea { width: 100%; min-height: 70px; resize: vertical; }
+
+  .item { border-top: 1px solid var(--rule); }
+  .head { display: grid; grid-template-columns: 54px minmax(0, 2.2fr) minmax(0, 1.6fr) 100px 150px; gap: 14px; align-items: center; padding: 14px 0; }
+  .head .t { cursor: pointer; }
+  .head .t b { display: block; font-size: 17px; letter-spacing: -.01em; }
+  .head .t span { color: var(--mute); }
+  .sub { color: var(--mute); font-size: 13px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  @media (max-width: 900px) { .head { grid-template-columns: 44px 1fr 140px; } .head .hide-s { display: none; } }
+  .tag { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; border: 1px solid var(--ink); padding: 2px 7px; border-radius: 3px; display: inline-block; }
+  .tag.Reach { background: var(--ink); color: var(--bg); }
+  .dot { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+  .dot::before { content: ""; width: 9px; height: 9px; background: currentColor; display: inline-block; }
+  .dot.v { color: var(--ok); } .dot.p { color: var(--warn); } .dot.u { color: var(--bad); }
+  .detail { display: none; padding: 4px 0 26px 68px; }
+  .item.open .detail { display: block; }
+  .item.open .t b::after { content: " \2212"; color: var(--accent); }
+  .item:not(.open) .t b::after { content: " +"; color: var(--mute); }
+  dl { display: grid; grid-template-columns: 170px 1fr; gap: 8px 18px; margin: 0 0 18px; }
+  dt { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); padding-top: 2px; }
+  dd { margin: 0; }
+  @media (max-width: 700px) { .detail { padding-left: 0; } dl { grid-template-columns: 1fr; gap: 2px; } dd { margin-bottom: 10px; } }
+  .edit { display: grid; gap: 10px; max-width: 760px; }
+  .edit label { display: grid; gap: 4px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); font-weight: 500; padding: 8px 8px 8px 0; border-bottom: 1px solid var(--rule); }
+  td { padding: 10px 8px 10px 0; border-bottom: 1px solid var(--soft); vertical-align: middle; }
+  td input { width: 100%; min-width: 80px; }
+  td.num, th.num { text-align: right; padding-right: 14px; }
+  .scroll { overflow-x: auto; }
+  .bar { height: 6px; background: var(--soft); margin: 6px 0 20px; }
+  .bar i { display: block; height: 100%; background: var(--accent); }
+  .docrow { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr) 140px minmax(0, 2fr); gap: 14px; align-items: center; border-top: 1px solid var(--soft); padding: 10px 0; }
+  @media (max-width: 800px) { .docrow { grid-template-columns: 1fr 140px; } .docrow .hide-s { display: none; } }
+
+  .toast { position: fixed; right: 18px; bottom: 18px; background: var(--ink); color: var(--bg); font-family: var(--mono); font-size: 12px; padding: 9px 13px; border-radius: 6px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.on { opacity: 1; } .toast.err { background: var(--bad); }
+  .banner { border: 1px solid var(--accent); padding: 10px 14px; margin: 18px 0 0; }
+  dialog { border: 1px solid var(--ink); background: var(--bg); padding: 26px; max-width: 520px; width: calc(100% - 32px); }
+  dialog::backdrop { background: rgba(17,17,17,.4); }
+  dialog form { display: grid; gap: 12px; }
+  .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
+  .primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .muted { color: var(--mute); }
+  .empty { padding: 30px 0; color: var(--mute); }
+  #lock { position: fixed; inset: 0; background: var(--bg); z-index: 10; display: grid; place-items: center; padding: 24px; }
+  #lock form { display: grid; gap: 14px; width: min(420px, 100%); }
+  #lock input { padding: 12px 14px; font-size: 16px; }
+  body.locked > header, body.locked > nav, body.locked > main, body.locked > #banner { visibility: hidden; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="label">Design masters &middot; planner</div>
+    <h1>Masters<br><span>2028</span></h1>
+  </div>
+  <div class="tools">
+    <span id="mode" class="pill mode">demo</span>
+    <button class="pill" id="refresh">Refresh</button>
+    <button class="pill" id="settings">Settings</button>
+  </div>
+</header>
+<div id="banner"></div>
+<nav id="nav"></nav>
+<main id="main"></main>
+<div class="toast" id="toast"></div>
+
+<dialog id="dlg-settings">
+  <form method="dialog" id="f-settings">
+    <h2>Connect to Google Sheet</h2>
+    <p class="muted">Paste the Apps Script web app URL and the token you set in Code.gs. Leave both empty to use local demo data.</p>
+    <label class="label">Web app URL<input type="text" name="url" placeholder="https://script.google.com/macros/s/.../exec"></label>
+    <label class="label">Token<input type="text" name="token" placeholder="the TOKEN value from Code.gs"></label>
+    <div class="row">
+      <button type="button" class="pill" id="s-push">Push starting data to sheet</button>
+      <button type="button" class="pill" id="s-demo">Reset to demo</button>
+      <button type="button" class="pill" id="s-cancel">Cancel</button>
+      <button type="submit" class="pill primary">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-add">
+  <form method="dialog" id="f-add">
+    <h2>Add a programme</h2>
+    <label class="label">University<input type="text" name="University" required></label>
+    <label class="label">Programme<input type="text" name="Programme" required></label>
+    <label class="label">Country<input type="text" name="Country" required></label>
+    <label class="label">Tier<select name="Tier"><option>Reach</option><option selected>Match</option><option>Safe</option><option>Backup</option></select></label>
+    <label class="label">Deadline (as you know it)<input type="text" name="Last-cycle / known deadline"></label>
+    <label class="label">Source link<input type="text" name="Source"></label>
+    <div class="row"><button type="button" class="pill" id="a-cancel">Cancel</button><button type="submit" class="pill primary">Add</button></div>
+  </form>
+</dialog>
+
+<div id="lock">
+  <form id="f-lock">
+    <div class="label">Locked</div>
+    <h1 style="font-size:clamp(40px,8vw,88px)">Masters<br><span>2028</span></h1>
+    <input type="password" id="pw" placeholder="Password" autocomplete="current-password" autofocus>
+    <button type="submit" class="pill primary">Unlock</button>
+    <div id="lock-err" class="label" style="color:var(--bad)"></div>
+  </form>
+</div>
+<script src="seed.enc.js"></script>
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const LS = { url: 'mt_url', token: 'mt_token', local: 'mt_local' };
+const STATUS = {
+  Programmes: ['Not started', 'Researching', 'Contacted school', 'Preparing', 'Applied', 'Offer', 'Rejected', 'Dropped'],
+  Scholarships: ['Not started', 'Researching', 'Preparing', 'Applied', 'Awarded', 'Rejected', 'Dropped'],
+  Documents: ['Not started', 'In progress', 'Have', 'Done']
+};
+const VIEWS = ['Overview', 'Programmes', 'Funding', 'Plan', 'Docs', 'Cost'];
+let data = null, mode = 'demo', view = 'Overview';
+const open = new Set();
+const filt = { country: 'All', tier: 'All', q: '', hideDropped: true };
+
+/* ---------- data layer ---------- */
+const base = () => localStorage.getItem(LS.url) || '';
+const tok = () => localStorage.getItem(LS.token) || '';
+const local = () => JSON.parse(localStorage.getItem(LS.local) || '{}');
+const putLocal = o => localStorage.setItem(LS.local, JSON.stringify(o));
+
+async function load() {
+  $('#banner').innerHTML = '';
+  if (base()) {
+    try {
+      const u = base() + (base().includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(tok());
+      const r = await fetch(u);
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error || 'request failed');
+      data = j.data; mode = 'live'; return;
+    } catch (e) {
+      $('#banner').innerHTML = `<div class="banner mono">Could not reach the sheet (${esc(e.message)}). Showing demo data instead. Check Settings.</div>`;
+    }
+  }
+  data = JSON.parse(JSON.stringify(window.SEED)); mode = 'demo';
+  const l = local();
+  (l.__append || []).forEach(a => data[a.table].rows.push(a.row));
+  Object.keys(l).forEach(t => {
+    if (t === '__append' || !data[t]) return;
+    Object.keys(l[t]).forEach(rw => { const row = data[t].rows.find(r => String(r._row) === rw); if (row) Object.assign(row, l[t][rw]); });
+  });
+}
+
+function toast(msg, err) {
+  const t = $('#toast'); t.textContent = msg; t.className = 'toast on' + (err ? ' err' : '');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.className = 'toast', err ? 3500 : 1100);
+}
+
+async function post(body) {
+  const r = await fetch(base(), { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ token: tok(), ...body }) });
+  const j = await r.json(); if (!j.ok) throw new Error(j.error); return j;
+}
+
+const timers = {};
+function save(table, row, values) {
+  Object.assign(row, values);
+  if (mode === 'demo') {
+    const l = local(); l[table] = l[table] || {}; l[table][row._row] = { ...(l[table][row._row] || {}), ...values };
+    putLocal(l); toast('Saved locally'); return;
+  }
+  const key = table + row._row + Object.keys(values).join();
+  clearTimeout(timers[key]); toast('Saving...');
+  timers[key] = setTimeout(async () => {
+    try { await post({ action: 'update', table, row: row._row, values }); toast('Saved to sheet'); }
+    catch (e) { toast('Save failed: ' + e.message, true); }
+  }, 450);
+}
+
+async function addRow(table, values) {
+  if (mode === 'demo') {
+    const rows = data[table].rows; const row = { _row: Math.max(...rows.map(r => r._row)) + 1 };
+    data[table].headers.forEach(h => row[h] = null); Object.assign(row, values); rows.push(row);
+    const l = local(); l.__append = l.__append || []; l.__append.push({ table, row }); putLocal(l); toast('Added locally'); return;
+  }
+  toast('Adding...');
+  try { await post({ action: 'append', table, values }); await load(); render(); toast('Added to sheet'); }
+  catch (e) { toast('Add failed: ' + e.message, true); }
+}
+
+/* ---------- derived numbers ---------- */
+function profile() {
+  const sems = data.Profile.rows.filter(r => /^Sem/.test(r.Semester));
+  const credits = sems.reduce((a, r) => a + Number(r.Credits || 0), 0);
+  const cgpa = sems.reduce((a, r) => a + Number(r.Credits || 0) * Number(r.SGPA || 0), 0) / (credits || 1);
+  const got = sems.reduce((a, r) => a + Number(r['Marks scored'] || 0), 0), max = sems.reduce((a, r) => a + Number(r['Max marks'] || 0), 0);
+  return { credits, cgpa, pct: max ? got / max * 100 : 0 };
+}
+function gradeCheck(row) {
+  const min = row['Min grade % (if stated)'];
+  if (min === null || min === undefined || min === '') return 'Check';
+  const p = profile(); const mine = row.ID === 'NL1' ? p.cgpa * 10 : p.pct;
+  return mine >= Number(min) ? (Number(min) >= 70 && mine - Number(min) < 5 ? 'Yes, small margin' : 'Yes') : 'No';
+}
+const conf = c => /^Verified/.test(c || '') ? ['v', 'Verified'] : (c === 'Partly' ? ['p', 'Partly'] : ['u', 'Unchecked']);
+const inr = n => n >= 100000 ? '₹' + (n / 100000).toFixed(1) + ' L' : '₹' + Math.round(n).toLocaleString('en-IN');
+const rate = cur => Number((data.Rates.rows.find(r => r.Currency === cur) || {})['Rate to INR'] || 0);
+const link = s => /^https?:/.test(s || '') ? `<a href="${esc(s)}" target="_blank" rel="noopener">${esc(s.replace(/^https?:\/\/(www\.)?/, '').slice(0, 60))}</a>` : esc(s || '');
+const sel = (opts, cur, attrs) => `<select ${attrs}>${[...new Set([...(cur && !opts.includes(cur) ? [cur] : []), ...opts])].map(o => `<option ${o === cur ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
+
+/* ---------- views ---------- */
+function vOverview() {
+  const P = data.Programmes.rows, S = data.Scholarships.rows, pr = profile();
+  const count = s => P.filter(r => r.Status === s).length;
+  const flags = [];
+  S.filter(s => /Uncertain/.test(s['Fit for you'] || '')).forEach(s => flags.push([`<b>${esc(s.Scholarship)}:</b> ${esc(s['Fit for you'])}. Open Funding for the full rules.`]));
+  P.filter(p => /^Risk/.test(p['3-year degree status'] || '')).forEach(p => flags.push([`<b>${esc(p.University)}, ${esc(p.Programme)}:</b> ${esc(p['3-year degree status'])}`]));
+  S.filter(s => gradeCheck(s) === 'Yes, small margin').forEach(s => flags.push([`<b>${esc(s.Scholarship)}:</b> your ${pr.pct.toFixed(1)}% clears the ${s['Min grade % (if stated)']}% cut-off by a small margin.`]));
+  const un = P.filter(p => conf(p['Data confidence'])[0] === 'u').length;
+  flags.push([`<b>${un} of ${P.length} programmes</b> are from memory or unchecked. Open them under Programmes and verify before you spend time.`]);
+  const docsLeft = data.Documents.rows.filter(d => d.Status === 'Not started').length;
+  flags.push([`<b>${docsLeft} documents</b> not started. Start with the Strate letter on degree length and ECTS.`]);
+  return `
+  <div class="grid">
+    <div class="stats">
+      <div class="stat"><b>${P.length}</b><span class="label">programmes tracked</span></div>
+      <div class="stat"><b>${count('Researching') + count('Contacted school')}</b><span class="label">being researched</span></div>
+      <div class="stat"><b>${count('Applied')}</b><span class="label">applied</span></div>
+      <div class="stat"><b>${pr.cgpa.toFixed(2)}</b><span class="label">cgpa / 10 &middot; ${pr.pct.toFixed(1)}%</span></div>
+    </div>
+    <div class="two">
+      <section><h2>Watch these</h2>${flags.map(f => `<div class="flag"><i></i><div>${f[0]}</div></div>`).join('')}</section>
+      <section><h2>Next steps</h2>${data.Timeline.rows.slice(0, 5).map(t => `<div class="step"><span class="mono">${esc(t.When)}</span><div>${esc(t.Task)}<div class="sub">${esc(t.Basis || '')}</div></div></div>`).join('')}</section>
+    </div>
+  </div>`;
+}
+
+function vProgrammes() {
+  const P = data.Programmes.rows;
+  const countries = ['All', ...new Set(P.map(p => p.Country))], tiers = ['All', 'Reach', 'Match', 'Safe', 'Backup'];
+  const q = filt.q.toLowerCase();
+  const list = P.filter(p => (filt.country === 'All' || p.Country === filt.country) && (filt.tier === 'All' || p.Tier === filt.tier)
+    && !(filt.hideDropped && p.Status === 'Dropped') && (!q || JSON.stringify(p).toLowerCase().includes(q)));
+  return `
+  <div class="filters">
+    ${countries.map(c => `<button class="chip ${filt.country === c ? 'on' : ''}" data-f="country" data-v="${esc(c)}">${esc(c)}</button>`).join('')}
+    <span class="muted">|</span>
+    ${tiers.map(c => `<button class="chip ${filt.tier === c ? 'on' : ''}" data-f="tier" data-v="${c}">${c}</button>`).join('')}
+    <input type="search" id="q" placeholder="Search" value="${esc(filt.q)}">
+    <label class="label"><input type="checkbox" id="hd" ${filt.hideDropped ? 'checked' : ''}> hide dropped</label>
+    <button class="pill" id="add" style="margin-left:auto">+ Add programme</button>
+  </div>
+  <div class="label" style="margin-bottom:6px">${list.length} shown</div>
+  ${list.map(p => progItem(p)).join('') || '<div class="empty">Nothing matches.</div>'}`;
+}
+function progItem(p) {
+  const [cc, cl] = conf(p['Data confidence']);
+  return `<div class="item ${open.has('P' + p._row) ? 'open' : ''}" data-key="P${p._row}">
+    <div class="head">
+      <span class="mono">${esc(p.ID)}</span>
+      <div class="t" data-toggle><b>${esc(p.Programme)}</b><span>${esc(p.University)}</span></div>
+      <div class="hide-s"><span class="tag ${esc(p.Tier)}">${esc(p.Tier)}</span> <span class="label">${esc(p.Country)}</span><div class="sub">${esc(p['Last-cycle / known deadline'])}</div></div>
+      <span class="dot ${cc} hide-s">${cl}</span>
+      ${sel(STATUS.Programmes, p.Status, `data-table="Programmes" data-row="${p._row}" data-h="Status"`)}
+    </div>
+    <div class="detail">
+      <dl>
+        <dt>Fit</dt><dd>${esc(p.Fit)}</dd>
+        <dt>Length &middot; intake</dt><dd>${esc(p.Length)} &middot; ${esc(p['Target intake'])}</dd>
+        <dt>Deadline</dt><dd>${esc(p['Last-cycle / known deadline'])}</dd>
+        <dt>Tuition</dt><dd>${esc(p['Tuition (as found)'])}</dd>
+        <dt>3-year degree</dt><dd>${esc(p['3-year degree status'])}</dd>
+        <dt>Grade check</dt><dd>${esc(gradeCheck(p))}${p['Min grade % (if stated)'] ? ' (minimum ' + esc(p['Min grade % (if stated)']) + '%)' : ''}</dd>
+        <dt>Portfolio / tests</dt><dd>${esc(p['Portfolio / tests'])}</dd>
+        <dt>Scholarships</dt><dd>${esc(p['Scholarships to chase'])}</dd>
+        <dt>Source</dt><dd>${link(p.Source)}</dd>
+      </dl>
+      <div class="edit">
+        <label class="label">Next action<input type="text" value="${esc(p['Next action'])}" data-table="Programmes" data-row="${p._row}" data-h="Next action"></label>
+        <label class="label">My notes<textarea data-table="Programmes" data-row="${p._row}" data-h="My notes">${esc(p['My notes'])}</textarea></label>
+      </div>
+    </div>
+  </div>`;
+}
+
+function vFunding() {
+  return data.Scholarships.rows.map(s => {
+    const [cc, cl] = conf(s['Data confidence']), g = gradeCheck(s);
+    return `<div class="item ${open.has('S' + s._row) ? 'open' : ''}" data-key="S${s._row}">
+      <div class="head">
+        <span class="mono">${esc(s.ID)}</span>
+        <div class="t" data-toggle><b>${esc(s.Scholarship)}</b><span>${esc(s.Country)} &middot; ${esc(s['What it covers'])}</span></div>
+        <div class="hide-s"><div class="sub">${esc(s['Expected next window'])}</div></div>
+        <span class="dot ${cc} hide-s">${cl}</span>
+        ${sel(STATUS.Scholarships, s.Status, `data-table="Scholarships" data-row="${s._row}" data-h="Status"`)}
+      </div>
+      <div class="detail">
+        <dl>
+          <dt>Eligibility</dt><dd>${esc(s['Key eligibility found'])}</dd>
+          <dt>Fit for you</dt><dd>${esc(s['Fit for you'])}</dd>
+          <dt>Last deadline</dt><dd>${esc(s['Last-known deadline'])}</dd>
+          <dt>Expected next</dt><dd>${esc(s['Expected next window'])}</dd>
+          ${s['Min grade % (if stated)'] ? `<dt>Grade check</dt><dd>${esc(g)} (minimum ${esc(s['Min grade % (if stated)'])}%)</dd>` : ''}
+          <dt>Source</dt><dd>${link(s.Source)}</dd>
+        </dl>
+        <div class="edit"><label class="label">My notes<textarea data-table="Scholarships" data-row="${s._row}" data-h="My notes">${esc(s['My notes'])}</textarea></label></div>
+      </div></div>`;
+  }).join('');
+}
+
+function vPlan() {
+  return data.Timeline.rows.map(t => `<div class="step"><span class="mono">${esc(t.When)}</span><div><b>${esc(t.Task)}</b><div class="sub">${esc(t['Applies to'])} &middot; ${esc(t.Basis)}</div></div></div>`).join('')
+    + '<p class="muted" style="margin-top:20px">Dates marked as last cycle are 2026-27 dates. Confirm each when the 2027-28 round opens.</p>';
+}
+
+function vDocs() {
+  const D = data.Documents.rows, done = D.filter(d => /^(Have|Done)/.test(d.Status || '')).length;
+  return `<div class="label">${done} of ${D.length} ready</div><div class="bar"><i style="width:${D.length ? done / D.length * 100 : 0}%"></i></div>
+  ${D.map(d => `<div class="docrow"><b>${esc(d.Document)}</b><span class="muted hide-s">${esc(d['Needed for'])}</span>
+    ${sel(STATUS.Documents, d.Status, `data-table="Documents" data-row="${d._row}" data-h="Status"`)}
+    <input type="text" class="hide-s" value="${esc(d.Notes)}" data-table="Documents" data-row="${d._row}" data-h="Notes"></div>`).join('')}`;
+}
+
+function costCalc(r) {
+  const fee = Number(r['Tuition per year (local)'] || 0), yrs = Number(r.Years || 0), rt = rate(r.Currency);
+  const tuition = fee * yrs * rt, living = Number(r['Living cost per year (INR)'] || 0) * yrs, sch = Number(r['Scholarship total (INR)'] || 0);
+  const total = tuition + living; return { tuition, total, loan: Math.max(0, total - sch) };
+}
+function vCost() {
+  const num = (r, h) => `<input type="text" inputmode="decimal" value="${esc(r[h] ?? '')}" data-table="Cost" data-row="${r._row}" data-h="${esc(h)}" data-num>`;
+  return `<p class="muted" style="max-width:640px">Fill in tuition, living cost and scholarship value. Loan need updates as you type. Exchange rates are placeholders: ${data.Rates.rows.map(r => r.Currency + ' ' + r['Rate to INR']).join(' &middot; ')}. Edit rates in the sheet's Cost tab.</p>
+  <div class="scroll"><table><thead><tr><th>Programme</th><th>Cur</th><th>Tuition / yr</th><th>Years</th><th>Living / yr (INR)</th><th>Scholarship total (INR)</th><th class="num">Tuition (INR)</th><th class="num">Total</th><th class="num">Loan need</th></tr></thead><tbody>
+  ${data.Cost.rows.map(r => { const c = costCalc(r); return `<tr data-cost="${r._row}"><td><b>${esc(r.Programme)}</b><div class="sub">${esc(r.Notes)}</div></td><td class="mono">${esc(r.Currency)}</td>
+    <td>${num(r, 'Tuition per year (local)')}</td><td>${num(r, 'Years')}</td><td>${num(r, 'Living cost per year (INR)')}</td><td>${num(r, 'Scholarship total (INR)')}</td>
+    <td class="num" data-o="tuition">${inr(c.tuition)}</td><td class="num" data-o="total">${inr(c.total)}</td><td class="num" data-o="loan"><b>${inr(c.loan)}</b></td></tr>`; }).join('')}
+  </tbody></table></div>`;
+}
+
+/* ---------- render + events ---------- */
+function render() {
+  $('#nav').innerHTML = VIEWS.map(v => `<button class="${v === view ? 'on' : ''}" data-view="${v}">${v}</button>`).join('');
+  const m = $('#mode'); m.textContent = mode === 'live' ? 'live: google sheet' : 'demo data'; m.className = 'pill mode ' + (mode === 'live' ? 'live' : '');
+  $('#main').innerHTML = { Overview: vOverview, Programmes: vProgrammes, Funding: vFunding, Plan: vPlan, Docs: vDocs, Cost: vCost }[view]();
+}
+
+document.addEventListener('click', e => {
+  const t = e.target;
+  if (t.dataset.view) { view = t.dataset.view; render(); window.scrollTo(0, 0); return; }
+  if (t.dataset.f) { filt[t.dataset.f] = t.dataset.v; render(); return; }
+  const tg = t.closest('[data-toggle]');
+  if (tg) { const it = tg.closest('.item'); it.classList.toggle('open'); const k = it.dataset.key; it.classList.contains('open') ? open.add(k) : open.delete(k); return; }
+  if (t.id === 'add') $('#dlg-add').showModal();
+  if (t.id === 'refresh') load().then(() => { render(); toast('Refreshed'); });
+  if (t.id === 'settings') { const f = $('#f-settings'); f.url.value = base(); f.token.value = tok(); $('#dlg-settings').showModal(); }
+  if (t.id === 's-push') {
+    const f = $('#f-settings'); localStorage.setItem(LS.url, f.url.value.trim()); localStorage.setItem(LS.token, f.token.value.trim());
+    if (!base()) { toast('Add the URL and token first', true); return; }
+    if (!confirm('Write the starting data into the connected Google Sheet? It refuses if the Programmes tab already has rows.')) return;
+    toast('Pushing...');
+    post({ action: 'seed', data: window.SEED }).then(() => load()).then(() => { render(); $('#dlg-settings').close(); toast('Sheet filled'); }).catch(err => toast('Push failed: ' + err.message, true));
+    return;
+  }
+  if (t.id === 's-cancel') $('#dlg-settings').close();
+  if (t.id === 'a-cancel') $('#dlg-add').close();
+  if (t.id === 's-demo') { localStorage.removeItem(LS.url); localStorage.removeItem(LS.token); localStorage.removeItem(LS.local); $('#dlg-settings').close(); load().then(render); }
+});
+function rowOf(el) { return data[el.dataset.table].rows.find(r => String(r._row) === el.dataset.row); }
+document.addEventListener('change', e => {
+  const el = e.target; if (el.id === 'hd') { filt.hideDropped = el.checked; render(); return; }
+  if (!el.dataset.table || el.dataset.num !== undefined) return;
+  save(el.dataset.table, rowOf(el), { [el.dataset.h]: el.value });
+});
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.id === 'q') { filt.q = el.value; const pos = el.selectionStart; render(); const n = $('#q'); n.focus(); n.setSelectionRange(pos, pos); return; }
+  if (!el.dataset.table) return;
+  if (el.dataset.num !== undefined) {
+    const v = el.value.replace(/[^0-9.]/g, ''); const row = rowOf(el);
+    save('Cost', row, { [el.dataset.h]: v === '' ? '' : Number(v) });
+    const c = costCalc(row), tr = el.closest('tr');
+    tr.querySelector('[data-o=tuition]').textContent = inr(c.tuition); tr.querySelector('[data-o=total]').textContent = inr(c.total); tr.querySelector('[data-o=loan]').innerHTML = '<b>' + inr(c.loan) + '</b>';
+  } else if (el.tagName !== 'SELECT') save(el.dataset.table, rowOf(el), { [el.dataset.h]: el.value });
+});
+$('#f-settings').addEventListener('submit', () => {
+  const f = $('#f-settings'); localStorage.setItem(LS.url, f.url.value.trim()); localStorage.setItem(LS.token, f.token.value.trim());
+  load().then(() => { render(); toast(mode === 'live' ? 'Connected' : 'Still demo'); });
+});
+$('#f-add').addEventListener('submit', async () => {
+  const f = $('#f-add'), v = {}; new FormData(f).forEach((val, k) => v[k] = val);
+  const n = data.Programmes.rows.length + 1; v.ID = 'N' + n; v['Data confidence'] = 'Not checked'; v.Status = 'Not started';
+  await addRow('Programmes', v); f.reset(); view = 'Programmes'; render();
+});
+
+/* ---------- password gate: the starting data is AES-GCM encrypted in seed.enc.js ---------- */
+document.body.classList.add('locked');
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function decryptSeed(pw) {
+  const E = window.SEED_ENC;
+  const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64(E.salt), iterations: E.iter, hash: 'SHA-256' }, km, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  const buf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(E.iv) }, key, b64(E.data));
+  return JSON.parse(new TextDecoder().decode(buf));
+}
+async function unlock(pw) {
+  window.SEED = await decryptSeed(pw);
+  sessionStorage.setItem('mt_pw', pw);
+  $('#lock').remove(); document.body.classList.remove('locked');
+  await load(); render();
+}
+$('#f-lock').addEventListener('submit', async e => {
+  e.preventDefault(); $('#lock-err').textContent = '';
+  try { await unlock($('#pw').value); } catch (err) { $('#lock-err').textContent = window.SEED_ENC ? 'Wrong password' : 'seed.enc.js missing'; }
+});
+if (sessionStorage.getItem('mt_pw') && window.SEED_ENC) unlock(sessionStorage.getItem('mt_pw')).catch(() => sessionStorage.removeItem('mt_pw'));
+</script>
+</body>
+</html>
